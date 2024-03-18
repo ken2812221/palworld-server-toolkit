@@ -2089,7 +2089,7 @@ class GUI():
         except Exception as e:
             target_guild_uuid = None
         self.status('loading')
-        if DeleteBaseCamp(self.target_base.get(), group_id=target_guild_uuid):
+        if DeleteBaseCamp(self.target_base.get().split(" - ")[0], group_id=target_guild_uuid):
             messagebox.showinfo("Result", "Delete Base Camp Success")
         else:
             messagebox.showerror("Delete Base", "Failed to delete")
@@ -2143,7 +2143,7 @@ class GUI():
     def adjust_base_slot_count(self):
         target_guild_uuid = self.target_guild.get().split(" - ")[0]
         try:
-            baseCamp = MappingCache.BaseCampMapping[toUUID(self.target_base.get())]['value']
+            baseCamp = MappingCache.BaseCampMapping[toUUID(self.target_base.get().split(" - ")[0])]['value']
         except Exception as e:
             messagebox.showerror("Error Base Camp", "Error Base Camp")
             return
@@ -2184,9 +2184,13 @@ class GUI():
             return None
         self.target_base.set("")
         groupMapping = {str(group['key']): group for group in wsd['GroupSaveDataMap']['value']}
+        baseCampMapping = {str(baseCamp['key']): baseCamp for baseCamp in wsd['BaseCampSaveData']['value']}
         if target_guild_uuid in groupMapping:
-            self.target_base['value'] = [str(x) for x in
-                                         groupMapping[target_guild_uuid]['value']['RawData']['value']['base_ids']]
+            id_lists = []
+            for local_base_id in groupMapping[target_guild_uuid]['value']['RawData']['value']['base_ids']:
+                offset = baseCampMapping[local_base_id]['value']['RawData']['value']['transform']['translation']
+                id_lists += [f'{str(local_base_id)} - {"%4.0f, %4.0f" % (palworld_coord.sav_to_map(offset['x'], offset['y']))}']
+            self.target_base['value'] = id_lists
 
     def edit_guild(self):
         target_uuid = self.target_guild.get()[:36]
